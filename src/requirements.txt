@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+asyncio
+httpx
+pydantic
+pydantic[email]
