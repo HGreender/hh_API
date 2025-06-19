@@ -39,20 +39,6 @@ async def slow_endpoint(count: int = 500000000):
     }
 
 
-async def fetch_vacancies(url, headers):
-    async with httpx.AsyncClient(timeout=TIMEOUT) as client:
-        response = await client.get(url, headers=headers)
-        return response.json()
-
-
-async def extract_vacancies_links(data):
-    name_and_link = [
-        [item.get("name", ""), item.get("alternate_url", "")]
-        for item in data.get("items", [])
-    ]
-    return name_and_link
-
-
 @app.get("/hh_vacancies/{job_name}")
 async def get_hh_vacancies(job_name, pages: int = 20):
     headers = {"User-Agent": "Mozilla/5.0"}
@@ -79,6 +65,20 @@ class User(BaseModel):
 @app.post("/create_user")
 async def create_user(user: User):
     return {"message": f"{user.name} | {user.age} y.o. | {user.email}, "}
+
+
+async def fetch_vacancies(url, headers):
+    async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+        response = await client.get(url, headers=headers)
+        return response.json()
+
+
+async def extract_vacancies_links(data):
+    name_and_link = [
+        [item.get("name", ""), item.get("alternate_url", "")]
+        for item in data.get("items", [])
+    ]
+    return name_and_link
 
 
 def loop_sleep(count):
