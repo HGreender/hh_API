@@ -4,6 +4,7 @@ import re
 import httpx
 from fastapi import FastAPI
 
+MAX_PAGES = 100
 TIMEOUT = httpx.Timeout(15.0)
 GRADE_KEYWORDS = {
     r'\b(junior|джуниор|младший)\b': 'Junior',
@@ -19,6 +20,8 @@ app = FastAPI()
 
 @app.get("/hh_vacancies/{job_name}")
 async def get_hh_vacancies(job_name, pages: int = 20):
+    pages = min(pages, MAX_PAGES)
+
     headers = {"User-Agent": "Mozilla/5.0"}
     url = f"https://api.hh.ru/vacancies" \
           f"?text={job_name}" \
