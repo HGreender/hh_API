@@ -1,8 +1,12 @@
 from datetime import datetime
+from typing import List, Optional
 
 import re
 import httpx
 from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI()
 
 MAX_PAGES = 100
 TIMEOUT = httpx.Timeout(15.0)
@@ -15,11 +19,20 @@ GRADE_KEYWORDS = {
     r'\b(стажер|intern|практикант|trainee)\b': 'Intern'
 }
 
-app = FastAPI()
+
+class VacancyResponse(BaseModel):
+    name: str
+    grade: Optional[str]
+    url: str
+    publish_date: str
 
 
-@app.get("/hh_vacancies/{job_name}")
-async def get_hh_vacancies(job_name, pages: int = 20):
+class VacanciesResponse(BaseModel):
+    vacancies_name_grade_url_date: List[VacancyResponse]
+
+
+@app.get("/hh_vacancies/{job_name}", response_model=VacanciesResponse)
+async def get_hh_vacancies(job_name: str, pages: int = 20):
     pages = min(pages, MAX_PAGES)
 
     headers = {"User-Agent": "Mozilla/5.0"}
@@ -29,16 +42,16 @@ async def get_hh_vacancies(job_name, pages: int = 20):
           f"&per_page={pages}"
     try:
         vacancies_data = await fetch_vacancies(url=url, headers=headers)
-        links = extract_vacancies_links(vacancies_data)
+        name_grade_url_date = extract_name_grade_url_date(vacancies_data)
 
-        return {"vacancies_title_and_link": links}
+        return {"vacancies_name_grade_url_date": name_grade_url_date}
     except httpx.RequestError as e:
         return {"error": f"Request failed: {str(e)}"}
     except Exception as e:
         return {"error": f"Unexpected error: {str(e)}"}
 
 
-def extract_vacancies_links(data):
+def extract_name_grade_url_date(data):
     name_and_link = [
         {
             "name": item.get("name", ""),
@@ -63,7 +76,7 @@ def parse_date(item):
     return datetime.strptime(item["publish_date"], "%d.%m.%Y")
 
 
-def extract_grade(name: str) -> str | None:
+def extract_grade(name: str) -> Optional[str]:
     name_lower = name.lower()
     for pattern, grade in GRADE_KEYWORDS.items():
         if re.search(pattern, name_lower, re.IGNORECASE):

@@ -4,4 +4,3 @@ asyncio
 httpx
 pydantic
 pydantic[email]
-re

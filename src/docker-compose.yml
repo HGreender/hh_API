@@ -1,0 +1,12 @@
+version: '2.18.1'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+    volumes:
+      - .:/app
+    restart: unless-stopped
